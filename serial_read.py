@@ -4,62 +4,109 @@ import os
 import csv
 import matplotlib.pyplot as plt
 import sys
+from scipy.signal import find_peaks, peak_prominences
 
-dataset_file_name="dataset.csv"
-n_samples=12000 #analog samples from arduino lectures. Not dataset sampels
 
-while True:
-     try:
-         ser=serial.Serial('/dev/ttyACM0',115200)
-         print("Device connected!\n\n")
-         break
-     except FileNotFoundError and serial.serialutil.SerialException:
-         print("No device conected")
-         print("Reconnecting...")
-         time.sleep(3)
+def array_generator():
+    '''
+    Returns a array of 12000 numbers. Used fot the plots and the dataset header.
+    '''
+    number_list=[]
+    n_samples=12000
+    for i in range(n_samples):
+        number_list.append(i)
+    return number_list
 
-#Header of the dataset: [0,1,2...11999,classification]. Writing it if file doesn't exist.
-number_list=[] #used as header and plots
-for i in range(n_samples):
-    number_list.append(i)
 
-if os.path.isfile(dataset_file_name):
-    print ("Appending new entries to current dataset "+ dataset_file_name)
-else:
-    print("There isn't any dataset in the directory...\nCreating a fresh one...\n")
-    with open(dataset_file_name, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(number_list+["classification"])
-    time.sleep(1)
+def check_existing_dataset(dataset_file_name):
+    '''
+    Check for existing datasets. If there is an existing one that
+    matches the "dataset_file_name" input, use it. If not
+    create one with this name.
 
-classification=1
-
-while (classification<9):
-    n_reps=0
-    print("=================")
-    print("Gesture number: ", classification, "\n")
-    while (n_reps<3): #number of repetitions for each gesture.
-        print("reading serial port. Iteration n "+ str(n_reps))
-        i=0
-        data=[]
-        while (i<n_samples):
-            n_data=ser.read()
-            data+=n_data
-            i+=1
-
-        #Matplotlib plotting. Untill you don't close the graph window
-        #it doesnt' continue.
-        plt.plot(number_list,data)
-        plt.ylabel('entry n '+str(n_reps))
-        plt.xlabel('samples')
-        plt.show()
-        n_reps+=1
-        data+=[classification]
-        with open(dataset_file_name, 'a+', newline='') as file:
+    Return dataset_file_name string.
+    '''
+    if os.path.isfile(dataset_file_name):
+        print ("Appending new entries to current dataset "+ dataset_file_name)
+    else:
+        print("There isn't any dataset in the directory...\nCreating a fresh one...\n")
+        number_list=array_generator()
+        with open(dataset_file_name, 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(data)
+            writer.writerow(number_list+["threshold_pas"]+["peak_number"]+["classification"])
+        time.sleep(1)
+    return dataset_file_name
 
-    print("Gesture number ", classification, "done, next \n\n\n")
-    classification+=1
 
-ser.close()
+def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_samples=12000):
+    '''
+    Read "num_of_samples" samples from serial port "ser", and appends to a list. Computes also the
+    hysteresis threshold with variables "superior_threshold" and "inferior_threshold"
+
+    Returns data list and number_of_threshold_pass int.
+    '''
+    i=0
+    data=[]
+    high_state=False
+    threshold_times_crossed=0
+
+    while (i<num_of_samples):
+        sample_data=ser.read()
+        data+=sample_data
+        if sample_data[-1]>superior_threshold and high_state==False: #sample_data is type byte, if you select the last digit you get the int transformation
+            high_state=True
+            threshold_times_crossed+=1
+        elif sample_data[-1]<inferior_threshold and high_state==True:
+            high_state=False
+            #threshold_times_crossed+=1
+        i+=1
+    return data, threshold_times_crossed
+
+
+def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=4):
+    classification=1
+    number_list=array_generator()
+    while (classification<total_num_classification):
+        repetition=0
+        print("=================")
+        print("Gesture number: ", classification, "\n")
+
+        while (repetition<total_num_repetitions): #number of repetitions for each gesture.
+            data, threshold_times_crossed=serial_signal_read(ser)
+            peaks, _ =find_peaks(data, prominence=0.95 ,distance=250, threshold=3)
+            print("reading serial port. Iteration n "+ str(repetition))
+            print ("Times threshold was pass: ", threshold_times_crossed)
+            print ("Num of peaks: ", len(peaks), "\n")
+
+            #Matplotlib plotting. Untill you don't close the graph window
+            #it doesnt' continue.
+            plt.plot(number_list,data)
+            plt.ylabel('entry n '+str(repetition))
+            plt.xlabel('samples')
+            plt.show()
+            data+=[threshold_times_crossed,len(peaks),classification]
+            with open(dataset_file_name, 'a+', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(data)
+
+            repetition+=1
+
+        print("Gesture number ", classification, "done, next \n\n\n")
+        classification+=1
+
+
+
+if __name__ == '__main__':
+#Serial check and connection. ACM0 for default.
+    while True:
+         try:
+             ser=serial.Serial('/dev/ttyACM0',115200)
+             print("Device connected!\n\n")
+             break
+         except FileNotFoundError and serial.serialutil.SerialException:
+             print("No device conected")
+             print("Reconnecting...")
+             time.sleep(3)
+
+    iterator(check_existing_dataset("dataset_caca.csv"),ser)
+    ser.close()
