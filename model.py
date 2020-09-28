@@ -9,9 +9,6 @@ import serial
 import time
 from sklearn.neighbors import KNeighborsClassifier
 
-
-
-
 def train_model(dataset_path, train_test_split_var=True, debug=True):
     dataset = pd.read_csv(dataset_path)
     y=dataset.iloc[:,-1]
@@ -34,7 +31,7 @@ def train_model(dataset_path, train_test_split_var=True, debug=True):
     else:
         model=LogisticRegression(random_state=0, max_iter=10000, penalty='none', solver='sag', multi_class='multinomial').fit(X_f,y)
         #model= KNeighborsClassifier(7).fit(X, y)
-
+    print("model traied succesfully")
     dump(model, 'model1.joblib')
     return model
 
@@ -55,20 +52,29 @@ def evaluate_model_in_live(Idle_treshold, num_of_evaluations,debug=True):
     while num_of_evaluations!=0:
         sample_value=ser.read()
         while sample_value[-1]<Idle_treshold:
-            #stuck here
+            #stuck here untill some movement is detected
             sample_value=ser.read()
             if debug==True:
                 print ("")
         n_sample=0
         evaluation_data=[]
-        while n_sample<12000:
-            #collect 12000 samples
-            evaluation_data+=ser.read()
-            n_sample+=1
+        treshold_times_crossed=0
+
+        while (i<12000):
+            sample_data=ser.read()
+            data+=sample_data
+            if sample_data[-1]>superior_threshold and high_state==False: #sample_data is type byte, if you select the last digit you get the int transformation
+                high_state=True
+                threshold_times_crossed+=1
+            elif sample_data[-1]<inferior_threshold and high_state==True:
+                high_state=False
+                #threshold_times_crossed+=1
+            i+=1
+        peaks, _ =find_peaks(data, prominence=0.95 ,distance=250, threshold=3)
+        n_sample+=1
         print("Go!")
         evaluation_data_fft=fft(evaluation_data)
         evaluation_data_abs=np.abs(evaluation_data_fft)
-        #evaluation=pd.DataFrame.from_records(evaluation_data_abs)
         class_pertenance_probabilities=model.predict_proba([evaluation_data_abs])
         print("probability: ",class_pertenance_probabilities)
         print ("class: ", model.predict([evaluation_data_abs]))
@@ -79,5 +85,4 @@ def evaluate_model_in_live(Idle_treshold, num_of_evaluations,debug=True):
 
 if __name__ == '__main__':
     model=train_model("dataset_clone.csv", train_test_split_var=False)
-
-    evaluate_model_in_live(3, 15, debug=False)
+    evaluate_model_in_live(3, 15, debug=False) #low treshold, value of 3 of the adc, 15 iterarions, and prints deactivated

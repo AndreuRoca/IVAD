@@ -63,7 +63,7 @@ def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_sam
     return data, threshold_times_crossed
 
 
-def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=4):
+def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=5):
     classification=1
     number_list=array_generator()
     while (classification<total_num_classification):
@@ -108,5 +108,5 @@ if __name__ == '__main__':
              print("Reconnecting...")
              time.sleep(3)
 
-    iterator(check_existing_dataset("dataset_caca.csv"),ser)
+    iterator(check_existing_dataset("dataset_new_features.csv"),ser)
     ser.close()
