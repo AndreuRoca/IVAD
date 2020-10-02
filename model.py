@@ -9,9 +9,16 @@ import serial
 import time
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import find_peaks, peak_prominences
-from serial_read import serial_signal_read
+from serial_read import serial_signal_read, wait_until_serial_port_is_available_and_connect
 
-def train_model(dataset_path, train_test_split_var=True, debug=True):
+def train_model(dataset_path,model_path,train_test_split_var=True, debug=True):
+    '''
+    Trains from "dataset_path" and saves the model with persistence in "model_path", and overrides it.
+    You can choose to train it with the full dataset, or do a train-test split to calculate the accuracy score
+    Debug to enable Prints
+
+    Return model instance
+    '''
     dataset = pd.read_csv(dataset_path)
     y=dataset.iloc[:,-1]
     X=dataset.iloc[:,:-1]
@@ -31,28 +38,38 @@ def train_model(dataset_path, train_test_split_var=True, debug=True):
     else:
         model=LogisticRegression(random_state=0, max_iter=10000, penalty='none', solver='sag', multi_class='multinomial').fit(X_f,y)
     print("model traied succesfully")
-    dump(model, 'model1.joblib')
+    dump(model, model_path)
     return model
 
-def predict():
+def predict(data, model_path_or_model_var):
+    '''
+    Receives the data with all the features,the already trained model, and elaborates a prediction.
 
-    gesture_done=1
-    confidence=1
+    Returns the predictes class "gesture_done" and the confidence of this prediction being a float between (0.251-1].
+    '''
+    if type(model_path_or_model_var)==str:
+        model=load(model_path_or_model_var)
+    else:
+        model=model_path_or_model_var
+    #done this way so the program doesn't call predict 2 times which takes more time.
+    probabilities=model.predict_proba(data)
+    confidence=np.amax(probabilities)
+    gesture_done=np.where(confidence)
     return gesture_done, confidence
 
 def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):
-    #Serial read. When lectura>5, Take 12000 samples. Apply prediction.
-    model = load('model1.joblib')
-    while True:
-         try:
-             ser=serial.Serial('/dev/ttyACM0',115200)
-             print("Device connected!\n\n")
-             break
-         except FileNotFoundError and serial.serialutil.SerialException:
-             print("No device conected")
-             print("Reconnecting...")
-             time.sleep(3)
+    '''
+    Demo and testing function (not used in final model). Reads serial port and evaluates the data received.
+    Repeats "num_of_evaluations" times.Waits until idle_treshold is surpased (can also be ajusted for calibration).
+    Debug bool used for verbose.
 
+    Prints:
+    - the probability of pertenence to each class "model.predict_proba"
+    - class with most probability "model.predict"
+    - number of times the signal cross the threshod "threshold_times_crossed"
+    '''
+    model = load('model1.joblib')
+    ser=wait_until_serial_port_is_available_and_connect
     while num_of_evaluations!=0:
         sample_value=ser.read()
         while sample_value[-1]<idle_treshold:

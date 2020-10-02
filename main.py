@@ -7,7 +7,7 @@ def run():
     while (1):
         min_confidence=0.70
         data=serial_signal_read(ser)
-        gesture_done, confidence=prediction(data)
+        gesture_done, confidence=predict(data)
         if confidence>min_confidence:
             if gesture_done==1:
                 action_1_open_google_docs()

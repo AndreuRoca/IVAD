@@ -19,6 +19,12 @@ def array_generator():
 
 
 def wait_until_serial_port_is_available_and_connect():
+    '''
+    Blocking function. Untill the IVAD device is not connected (on serial port ACM0 as default), the serial object is not created
+    and the flow cannot continue.
+
+    Returns a Serial instance 'ser'
+    '''
     while True:
          try:
              ser=serial.Serial('/dev/ttyACM0',115200)
@@ -81,6 +87,17 @@ def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_sam
 
 
 def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=4):
+    '''
+    Function that runs trought 2 loops to create or add to dataset.
+    One counts how many entries of each class you will register (total_num_repetitions)
+    The other counts how many classes (gestures) the dataset includes.
+
+    Doesn't return anything, but writes on the "dataset_file_name" path the data and features in
+    the following format:
+    ---------------------------------------------------------------------------------------------------
+    | data[0] | data[1] | data[2] | ... | data[11999] | threshold_times_crossed | peak_number | class |
+    ---------------------------------------------------------------------------------------------------
+    '''
     classification=1
     number_list=array_generator()
     while (classification<total_num_classification):
@@ -112,8 +129,8 @@ def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classific
         classification+=1
 
 
+#Dataset generation and plot
 if __name__ == '__main__':
-#Serial check and connection. ACM0 for default.
     ser=wait_until_serial_port_is_available_and_connect()
     iterator(check_existing_dataset("dataset_kekw.csv"),ser)
     ser.close()

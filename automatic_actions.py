@@ -32,9 +32,8 @@ def type(str):
     keyboard.type(str)
 
 
-
+#Actions
 def action_1_open_google_docs():
-    #os.system("sudo -u andreurocagrange google-chrome https://docs.new")
     webbrowser.get('google-chrome').open('https://docs.new')
     return 0
 
@@ -46,21 +45,19 @@ def action_3_selec_copy_paste_to_new_email(email_address='weteroca@gmail.com',su
     press_and_release_control_plus_character('a')
     press_and_release_control_plus_character('c')
     webbrowser.get('google-chrome').open('https://mail.google.com/mail/u/0/#inbox?compose=new')
-    time.sleep(10)
+    time.sleep(15)
     type(email_address)
-    time.sleep(0.1)
     press_and_release_single_key(Key.tab)
     time.sleep(0.1)
+    press_and_release_single_key(Key.tab)
+    time.sleep(1)
     type(subject)
-    time.sleep(0.1)
+    time.sleep(1)
     press_and_release_single_key(Key.tab)
     press_and_release_control_plus_character('v')
     press_and_release_control_plus_character(Key.enter)
 
-
-
-
-
+#Test
 if __name__ == '__main__':
     #full iteration working.
     action_1_open_google_docs()
