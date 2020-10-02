@@ -18,6 +18,19 @@ def array_generator():
     return number_list
 
 
+def wait_until_serial_port_is_available_and_connect():
+    while True:
+         try:
+             ser=serial.Serial('/dev/ttyACM0',115200)
+             print("Device connected!\n\n")
+             break
+         except FileNotFoundError and serial.serialutil.SerialException:
+             print("No device conected")
+             print("Reconnecting...")
+             time.sleep(3)
+    return ser
+
+
 def check_existing_dataset(dataset_file_name):
     '''
     Check for existing datasets. If there is an existing one that
@@ -49,8 +62,12 @@ def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_sam
     data=[]
     high_state=False
     threshold_times_crossed=0
-
-    while (i<num_of_samples):
+    idle_treshold=3
+    sample_data=ser.read()
+    while sample_data[-1]<idle_treshold:
+            #stuck here untill some movement is detected
+        sample_data=ser.read()
+    while (i<12000):
         sample_data=ser.read()
         data+=sample_data
         if sample_data[-1]>superior_threshold and high_state==False: #sample_data is type byte, if you select the last digit you get the int transformation
@@ -58,12 +75,12 @@ def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_sam
             threshold_times_crossed+=1
         elif sample_data[-1]<inferior_threshold and high_state==True:
             high_state=False
-            #threshold_times_crossed+=1
         i+=1
+    print (threshold_times_crossed)
     return data, threshold_times_crossed
 
 
-def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=5):
+def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classification=4):
     classification=1
     number_list=array_generator()
     while (classification<total_num_classification):
@@ -95,18 +112,8 @@ def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classific
         classification+=1
 
 
-
 if __name__ == '__main__':
 #Serial check and connection. ACM0 for default.
-    while True:
-         try:
-             ser=serial.Serial('/dev/ttyACM0',115200)
-             print("Device connected!\n\n")
-             break
-         except FileNotFoundError and serial.serialutil.SerialException:
-             print("No device conected")
-             print("Reconnecting...")
-             time.sleep(3)
-
-    iterator(check_existing_dataset("dataset_new_features.csv"),ser)
+    ser=wait_until_serial_port_is_available_and_connect()
+    iterator(check_existing_dataset("dataset_kekw.csv"),ser)
     ser.close()

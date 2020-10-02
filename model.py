@@ -8,6 +8,8 @@ from joblib import dump, load
 import serial
 import time
 from sklearn.neighbors import KNeighborsClassifier
+from scipy.signal import find_peaks, peak_prominences
+from serial_read import serial_signal_read
 
 def train_model(dataset_path, train_test_split_var=True, debug=True):
     dataset = pd.read_csv(dataset_path)
@@ -24,24 +26,26 @@ def train_model(dataset_path, train_test_split_var=True, debug=True):
         if debug:
             print ("Train and test shape: ",X_train.shape, X_test.shape)
         model=LogisticRegression(random_state=0, max_iter=10000, penalty='none', solver='sag', multi_class='multinomial').fit(X_train, y_train)
-        #model= KNeighborsClassifier(7).fit(X_train, y_train)
-
         if debug:
             print("Test model accuracy score: ",model.score(X_test, y_test))
     else:
         model=LogisticRegression(random_state=0, max_iter=10000, penalty='none', solver='sag', multi_class='multinomial').fit(X_f,y)
-        #model= KNeighborsClassifier(7).fit(X, y)
     print("model traied succesfully")
     dump(model, 'model1.joblib')
     return model
 
+def predict():
 
-def evaluate_model_in_live(Idle_treshold, num_of_evaluations,debug=True):
+    gesture_done=1
+    confidence=1
+    return gesture_done, confidence
+
+def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):
     #Serial read. When lectura>5, Take 12000 samples. Apply prediction.
     model = load('model1.joblib')
     while True:
          try:
-             ser=serial.Serial('/dev/ttyACM1',115200)
+             ser=serial.Serial('/dev/ttyACM0',115200)
              print("Device connected!\n\n")
              break
          except FileNotFoundError and serial.serialutil.SerialException:
@@ -51,38 +55,26 @@ def evaluate_model_in_live(Idle_treshold, num_of_evaluations,debug=True):
 
     while num_of_evaluations!=0:
         sample_value=ser.read()
-        while sample_value[-1]<Idle_treshold:
+        while sample_value[-1]<idle_treshold:
             #stuck here untill some movement is detected
             sample_value=ser.read()
             if debug==True:
                 print ("")
-        n_sample=0
-        evaluation_data=[]
-        treshold_times_crossed=0
-
-        while (i<12000):
-            sample_data=ser.read()
-            data+=sample_data
-            if sample_data[-1]>superior_threshold and high_state==False: #sample_data is type byte, if you select the last digit you get the int transformation
-                high_state=True
-                threshold_times_crossed+=1
-            elif sample_data[-1]<inferior_threshold and high_state==True:
-                high_state=False
-                #threshold_times_crossed+=1
-            i+=1
+        data, threshold_times_crossed=serial_signal_read(ser)
         peaks, _ =find_peaks(data, prominence=0.95 ,distance=250, threshold=3)
-        n_sample+=1
         print("Go!")
-        evaluation_data_fft=fft(evaluation_data)
+        evaluation_data_fft=fft(data)
         evaluation_data_abs=np.abs(evaluation_data_fft)
-        class_pertenance_probabilities=model.predict_proba([evaluation_data_abs])
+        class_pertenance_probabilities=model.predict_proba([data+[threshold_times_crossed]+[len(peaks)]])
         print("probability: ",class_pertenance_probabilities)
-        print ("class: ", model.predict([evaluation_data_abs]))
+        print ("class: ", model.predict([data+[threshold_times_crossed]+[len(peaks)]]))
+        print("Threshold: ", threshold_times_crossed, "Peak: ", len(peaks))
+
         num_of_evaluations-=1
 
     print("exit evaluation")
 
 
 if __name__ == '__main__':
-    model=train_model("dataset_clone.csv", train_test_split_var=False)
-    evaluate_model_in_live(3, 15, debug=False) #low treshold, value of 3 of the adc, 15 iterarions, and prints deactivated
+    #model=train_model("dataset_new_features.csv", train_test_split_var=False)
+    evaluate_model_in_live(2, 15, debug=False) #low treshold, value of 3 of the adc, 15 iterarions, and prints deactivated
