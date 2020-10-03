@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
 from scipy.fft import fft
 from joblib import dump, load
 import serial
-import time
 from sklearn.neighbors import KNeighborsClassifier
 from scipy.signal import find_peaks, peak_prominences
 from serial_read import serial_signal_read, wait_until_serial_port_is_available_and_connect
@@ -41,21 +39,31 @@ def train_model(dataset_path,model_path,train_test_split_var=True, debug=True):
     dump(model, model_path)
     return model
 
-def predict(data, model_path_or_model_var):
+
+def find_peaks_num(data):
+    '''
+    Encapsulation of "find_peaks" function from scypy signal processing.
+    "Find peaks" return the position given the "data" as input
+
+    Return the number of peaks
+    '''
+    peaks, _ =find_peaks(data, prominence=0.95 ,distance=250, threshold=3)
+    return len(peaks)
+
+
+def predict(data, model):
     '''
     Receives the data with all the features,the already trained model, and elaborates a prediction.
 
     Returns the predictes class "gesture_done" and the confidence of this prediction being a float between (0.251-1].
     '''
-    if type(model_path_or_model_var)==str:
-        model=load(model_path_or_model_var)
-    else:
-        model=model_path_or_model_var
     #done this way so the program doesn't call predict 2 times which takes more time.
+
     probabilities=model.predict_proba(data)
     confidence=np.amax(probabilities)
     gesture_done=np.where(confidence)
     return gesture_done, confidence
+
 
 def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):
     '''
@@ -78,17 +86,15 @@ def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):
             if debug==True:
                 print ("")
         data, threshold_times_crossed=serial_signal_read(ser)
-        peaks, _ =find_peaks(data, prominence=0.95 ,distance=250, threshold=3)
+        peaks=find_peaks_num(data)
         print("Go!")
         evaluation_data_fft=fft(data)
         evaluation_data_abs=np.abs(evaluation_data_fft)
-        class_pertenance_probabilities=model.predict_proba([data+[threshold_times_crossed]+[len(peaks)]])
+        class_pertenance_probabilities=model.predict_proba([data+[threshold_times_crossed]+[peaks]])
         print("probability: ",class_pertenance_probabilities)
         print ("class: ", model.predict([data+[threshold_times_crossed]+[len(peaks)]]))
         print("Threshold: ", threshold_times_crossed, "Peak: ", len(peaks))
-
         num_of_evaluations-=1
-
     print("exit evaluation")
 
 

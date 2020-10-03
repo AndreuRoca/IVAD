@@ -3,9 +3,7 @@ import time
 import os
 import csv
 import matplotlib.pyplot as plt
-import sys
 from scipy.signal import find_peaks, peak_prominences
-
 
 def array_generator():
     '''
@@ -82,7 +80,6 @@ def serial_signal_read(ser,inferior_threshold=2, superior_threshold=9,num_of_sam
         elif sample_data[-1]<inferior_threshold and high_state==True:
             high_state=False
         i+=1
-    print (threshold_times_crossed)
     return data, threshold_times_crossed
 
 
