@@ -21,7 +21,7 @@ def train_model(dataset_path,model_path,train_test_split_var=True, debug=True):
     y=dataset.iloc[:,-1]
     X=dataset.iloc[:,:-1]
     if debug:
-        print ("1Dataset shape: ",dataset.shape)
+        print ("Dataset shape: ",dataset.shape)
     if train_test_split_var==True:
         X_train, X_test, y_train, y_test = train_test_split(X_f, y, test_size=0.30)
         if debug:
