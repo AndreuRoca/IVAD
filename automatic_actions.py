@@ -30,15 +30,17 @@ def type(str):
 
 
 #Actions
-def action_1_open_google_docs():
+def gesture_1_open_google_docs():
     webbrowser.get('google-chrome').open('https://docs.new')
 
+def gesture_1_close():
+    press_and_release_control_plus_character('w')
 
-def action_2_toggle_speach_writing():
+def gesture_2_toggle_speach_writing():
     press_and_release_control_plus_shift_plus_s()
 
 
-def action_3_selec_copy_paste_to_new_email(email_address='weteroca@gmail.com',subject='automatic_email'):
+def gesture_3_selec_copy_paste_to_new_email(email_address='weteroca@gmail.com',subject='automatic_email'):
     press_and_release_control_plus_character('a')
     press_and_release_control_plus_character('c')
     webbrowser.get('google-chrome').open('https://mail.google.com/mail/u/0/#inbox?compose=new')
@@ -54,15 +56,17 @@ def action_3_selec_copy_paste_to_new_email(email_address='weteroca@gmail.com',su
     press_and_release_control_plus_character('v')
     press_and_release_control_plus_character(Key.enter)
 
+def gesture_3_seach_IVAD_mails(subject='automatic_email'):
+    webbrowser.get('google-chrome').open('https://mail.google.com/mail/u/0/#search/automatic_email')
 
 #Test
 if __name__ == '__main__':
     #full iteration working.
-    action_1_open_google_docs()
+    gesture_1_open_google_docs()
     time.sleep(5)
-    action_2_toggle_speach_writing()
+    gesture_2_toggle_speach_writing()
     time.sleep(10)
-    action_2_toggle_speach_writing()
+    gesture_2_toggle_speach_writing()
     time.sleep(1)
-    action_3_selec_copy_paste_to_new_email()
-#    action_2_toggle_speach_writing()
+    gesture_3_selec_copy_paste_to_new_email()
+#    gesture_2_toggle_speach_writing()

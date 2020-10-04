@@ -55,15 +55,13 @@ def predict(data, model):
     '''
     #done this way so the program doesn't call predict 2 times which takes more time.
     probabilities=model.predict_proba(data)[0]
-    print (probabilities)
     index=0
     high=0
-
     for i in range(len(probabilities)):
         if probabilities[i]>high:
             high=probabilities[i]
             index=i
-    return index+1, probabilities
+    return index+1, high
 
 
 def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):

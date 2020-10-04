@@ -1,4 +1,4 @@
-from automatic_actions import action_1_open_google_docs, action_2_toggle_speach_writing, action_3_selec_copy_paste_to_new_email
+from automatic_actions import gesture_1_open_google_docs, gesture_2_toggle_speach_writing, gesture_3_selec_copy_paste_to_new_email, gesture_1_close, gesture_3_seach_IVAD_mails
 from model import train_model, predict, find_peaks_num
 from serial_read import serial_signal_read, wait_until_serial_port_is_available_and_connect
 import os
@@ -18,6 +18,8 @@ def run():
             return "exit"
     else:
         model=load(model_path)
+    google_docs_open=False #0 is for google docs closed, 1 is for open
+    gmail_open=False
     while (1):
         min_confidence=0.70
         data,threshold_times_crossed=serial_signal_read(ser)
@@ -25,11 +27,26 @@ def run():
         gesture_done, confidence=predict([data+[threshold_times_crossed]+[peaks]],model)
         if confidence>min_confidence:
             if gesture_done==1:
-                action_1_open_google_docs()
-            elif gesture_done==2:
-                action_2_toggle_speach_writing()
+                if google_docs_open==False and gmail_open==False:
+                    gesture_1_open_google_docs()
+                    google_docs_open=1
+                elif google_docs_open==True and gmail_open==False:
+                    gesture_1_close()
+                    google_docs_open=False
+                elif google_docs_open==False and gmail_open==True:
+                    gesture_1_close()
+                    gmail_open=False
+
+            elif gesture_done==2 and google_docs_open==True:
+                gesture_2_toggle_speach_writing()
+
             elif gesture_done==3:
-                action_3_selec_copy_paste_to_new_email()
+                if google_docs_open==True:
+                    gesture_3_selec_copy_paste_to_new_email()
+
+                elif google_docs_open==False and gmail_open==False:
+                    gesture_3_seach_IVAD_mails()
+                    gmail_open=True
         else:
             #gesture not detected with suficient confidence.
             pass
