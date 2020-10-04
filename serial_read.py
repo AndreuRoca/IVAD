@@ -129,5 +129,5 @@ def iterator(dataset_file_name,ser,total_num_repetitions=100,total_num_classific
 #Dataset generation and plot
 if __name__ == '__main__':
     ser=wait_until_serial_port_is_available_and_connect()
-    iterator(check_existing_dataset("dataset_kekw.csv"),ser)
+    iterator(check_existing_dataset("dataset.csv"),ser)
     ser.close()
