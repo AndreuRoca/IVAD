@@ -61,7 +61,7 @@ def gesture_3_seach_IVAD_mails(subject='automatic_email'):
 
 #Test
 if __name__ == '__main__':
-    #full iteration working.
+    #docs-scpech-gmail journey working.
     gesture_1_open_google_docs()
     time.sleep(5)
     gesture_2_toggle_speach_writing()
@@ -69,4 +69,3 @@ if __name__ == '__main__':
     gesture_2_toggle_speach_writing()
     time.sleep(1)
     gesture_3_selec_copy_paste_to_new_email()
-#    gesture_2_toggle_speach_writing()

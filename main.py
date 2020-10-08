@@ -8,8 +8,8 @@ def run():
     ser=wait_until_serial_port_is_available_and_connect()
     model_path='model.joblib'
     if os.path.isfile(model_path)==False:
-        print ("Training model...\nThis may take some time")
-        dataset_path='dataset_new_features.csv'
+        print ("Training model... This may take some time")
+        dataset_path='dataset.csv'
         if os.path.isfile(dataset_path)==True:
             model=train_model(dataset_path, model_path, train_test_split_var=False, debug=False)
             print("Model trained!")

@@ -86,11 +86,12 @@ def evaluate_model_in_live(idle_treshold, num_of_evaluations,debug=True):
                 print ("")
         data, threshold_times_crossed=serial_signal_read(ser)
         peaks=find_peaks_num(data)
-        print("Go!")
         gesture_done,confidence=predict([data+[threshold_times_crossed]+[peaks]],model)
-        print("probability: ",confidence)
+        if debug==True:
+            print("probability: ",confidence)
+            print("Threshold: ", threshold_times_crossed)
+            print("Peak: ", peaks)
         print ("class: ", gesture_done)
-        print("Threshold: ", threshold_times_crossed, "Peak: ", peaks)
         num_of_evaluations-=1
     print("exit evaluation")
 

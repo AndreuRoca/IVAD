@@ -1,0 +1,21 @@
+#!/bin/bash
+
+sudo apt-get update
+sudo apt-get install -y python3.8
+sudo apt-get -y install python3-pip
+
+pip3 install matplotlib==3.3.1
+pip3 install pyserial==3.4
+pip3 install scipy==1.5.2
+pip3 install pandas==1.1.1
+pip3 install joblib==0.16.0
+pip3 install sklearn==0.0
+pip3 install numpy==1.19.1
+pip3 install pynput==1.7.1
+
+sudo usermod -a -G dialout $USER
+sudo usermod -a -G input $USER
+
+echo "==================================================="
+echo "installation succesful! Logout and login to finish."
+echo "==================================================="
